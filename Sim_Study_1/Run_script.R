@@ -10,7 +10,7 @@ run_sim_mean_adj <- function(iter){
     dir.create(paste0(n_obs_vec[n],"_obs"))
     dir.create(paste0(n_obs_vec[n],"_obs/sim",iter))
     n_obs <- n_obs_vec[n]
-    
+
     nu <- rnorm(20, 0, 3)
     nu <- matrix(nu, nrow = 2, ncol = 10)
     decomp <- svd(nu, nv = 10)
@@ -32,9 +32,9 @@ run_sim_mean_adj <- function(iter){
     Phi[,,2] <- matrix(Phi_2, nrow = 2)
     Phi[,,3] <- matrix(Phi_3, nrow = 2)
     Phi[,,4] <- matrix(Phi_4, nrow = 2)
-    
+
     chi <- matrix(rnorm(n_obs *4, 0, 1), ncol = 4, nrow=n_obs)
-    
+
     Z <- matrix(0, nrow = n_obs, ncol = 2)
     alpha <- c(10, 1)
     for(i in 1:(n_obs * 0.3)){
@@ -48,8 +48,8 @@ run_sim_mean_adj <- function(iter){
     for(i in (n_obs * 0.6 + 1):n_obs){
       Z[i,] <- rdirichlet(1, alpha)
     }
-    
-    
+
+
     y <- matrix(0, nrow = n_obs, ncol = 10)
     for(i in 1:n_obs){
       mean = rep(0,10)
@@ -61,24 +61,24 @@ run_sim_mean_adj <- function(iter){
       }
       y[i,] = mvrnorm(n = 1, mean, diag(0.01, 10))
     }
-    
+
     x <- list("y" = y, "nu" = nu, "Z" = Z, "Phi" = Phi, "Chi" = chi)
-    
+
     saveRDS(x, paste("./", n_obs_vec[n],"_obs/sim",iter, "/truth.RDS", sep = ""))
-    
-    
+
+
     ## Set Hyperparameters
-    tot_mcmc_iters <- 2000
-    n_try <- 50
+    tot_mcmc_iters <- 4000
+    n_try <- 150
     k <- 2
     n_eigen <- 4
     Y <-y
-    
+
     ## Get Estimates of Z and nu
     est1 <- BMVMMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
-    
+
     tot_mcmc_iters <- 4000
-    n_try <- 5
+    n_try <- 10
     ## Run function
     est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen,
                              est1$Z, est1$nu)
@@ -96,13 +96,13 @@ run_sim_mean_adj <- function(iter){
 ##### Run Simulation
 
 ### Set working dir
-setwd("/Users/nicholasmarco/Box Sync/BayesFPMM_Supporting_Files/BMPMM_simulation/")
+setwd()
 
 ncpu <- min(5, availableCores())
 #
 plan(multisession, workers = ncpu)
 
 already_ran <- dir(paste0(getwd(), "/1000_obs"))
-to_run <- which(!paste0("sim", 1:25) %in% already_ran)
+to_run <- which(!paste0("sim", 1:50) %in% already_ran)
 seeds <- to_run
 future_lapply(seeds, function(this_seed) run_sim_mean_adj(this_seed))
