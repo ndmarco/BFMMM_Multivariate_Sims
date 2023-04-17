@@ -96,7 +96,7 @@ run_sim_mean_adj <- function(iter){
 ##### Run Simulation
 
 ### Set working dir
-setwd()
+setwd("")
 
 ncpu <- min(5, availableCores())
 #

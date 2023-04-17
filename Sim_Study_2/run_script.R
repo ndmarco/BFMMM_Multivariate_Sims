@@ -1,8 +1,10 @@
 library(MASS)
 library(DirichletReg)
-library(BayesFPMM)
+library(BayesFMMM)
+library(future.apply)
 
-for(q in 1:10){
+run_sim <- function(iter){
+  set.seed(iter)
   n_obs = 200
   nu <- matrix(0,nrow =3, ncol = 20)
   p <- diag(1, 20)
@@ -52,7 +54,7 @@ for(q in 1:10){
   }
 
   x <- list("y" = y, "nu" = nu, "Z" = Z, "Phi" = Phi, "Chi" = chi)
-  saveRDS(x, paste("/Users/nicholasmarco/Box Sync/BayesFPMM_Supporting_Files/BMPMM_simulation/Optimal_K/data/data", q, ".RDS", sep = ""))
+  saveRDS(x, paste("./data/data", iter, ".RDS", sep = ""))
   Y <- y
 
 
@@ -63,17 +65,19 @@ for(q in 1:10){
   n_try <- 50
   k <- 2
   n_eigen <- 3
-  dir <- "/Users/nicholasmarco/Box Sync/BayesFPMM_Supporting_Files/BMPMM_simulation/Optimal_K/2_clusters/"
+  dir <- "./2_clusters/"
 
   ## Get Estimates of Z and nu
-  est1 <- BMVPMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
+  est1 <- BMVMMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVPMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
-  dir_i <- paste(dir, "trace", q, "/", sep="")
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  dir.create(paste0("2_clusters/trace",iter))
+
+  dir_i <- paste(dir, "trace", iter, "/", sep="")
   tot_mcmc_iters <- 100000
-  MCMC.chain <-BMVPMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
+  MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
                                  est1$Z, est1$pi, est1$alpha_3,
                                  est2$delta, est2$gamma, est2$Phi, est2$A,
                                  est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
@@ -86,17 +90,18 @@ for(q in 1:10){
   n_try <- 50
   k <- 3
   n_eigen <- 3
-  dir <- "/Users/nicholasmarco/Box Sync/BayesFPMM_Supporting_Files/BMPMM_simulation/Optimal_K/3_clusters/"
+  dir <- "./3_clusters/"
 
   ## Get Estimates of Z and nu
-  est1 <- BMVPMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
+  est1 <- BMVMMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVPMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
-  dir_i <- paste(dir, "trace", q, "/", sep="")
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  dir_i <- paste(dir, "trace", iter, "/", sep="")
+  dir.create(paste0("3_clusters/trace",iter))
   tot_mcmc_iters <- 100000
-  MCMC.chain <-BMVPMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
+  MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
                                  est1$Z, est1$pi, est1$alpha_3,
                                  est2$delta, est2$gamma, est2$Phi, est2$A,
                                  est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
@@ -109,17 +114,18 @@ for(q in 1:10){
   n_try <- 50
   k <- 4
   n_eigen <- 3
-  dir <- "/Users/nicholasmarco/Box Sync/BayesFPMM_Supporting_Files/BMPMM_simulation/Optimal_K/4_clusters/"
+  dir <- "./4_clusters/"
 
   ## Get Estimates of Z and nu
-  est1 <- BMVPMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
+  est1 <- BMVMMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVPMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
-  dir_i <- paste(dir, "trace", q, "/", sep="")
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  dir.create(paste0("4_clusters/trace",iter))
+  dir_i <- paste(dir, "trace", iter, "/", sep="")
   tot_mcmc_iters <- 100000
-  MCMC.chain <-BMVPMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
+  MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
                                  est1$Z, est1$pi, est1$alpha_3,
                                  est2$delta, est2$gamma, est2$Phi, est2$A,
                                  est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
@@ -132,20 +138,36 @@ for(q in 1:10){
   n_try <- 50
   k <- 5
   n_eigen <- 3
-  dir <- "/Users/nicholasmarco/Box Sync/BayesFPMM_Supporting_Files/BMPMM_simulation/Optimal_K/5_clusters/"
+  dir <- "./5_clusters/"
 
   ## Get Estimates of Z and nu
-  est1 <- BMVPMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
+  est1 <- BMVMMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVPMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
-  dir_i <- paste(dir, "trace", q, "/", sep="")
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  dir.create(paste0("5_clusters/trace",iter))
+  dir_i <- paste(dir, "trace", iter, "/", sep="")
   tot_mcmc_iters <- 100000
-  MCMC.chain <-BMVPMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
+  MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
                                  est1$Z, est1$pi, est1$alpha_3,
                                  est2$delta, est2$gamma, est2$Phi, est2$A,
                                  est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
                                  thinning_num = 10, r_stored_iters = 10000)
 }
+
+##### Run Simulation
+
+### Set working dir
+setwd("")
+
+ncpu <- min(5, availableCores())
+#
+plan(multisession, workers = ncpu)
+
+already_ran <- dir(paste0(getwd(), "/5_clusters"))
+to_run <- which(!paste0("trace", 1:50) %in% already_ran)
+seeds <- to_run
+future_lapply(seeds, function(this_seed) run_sim(this_seed))
+
 

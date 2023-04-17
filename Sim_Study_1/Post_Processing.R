@@ -5,7 +5,7 @@ library(latex2exp)
 library(pracma)
 
 ### Set working dir
-setwd()
+setwd("")
 
 err_Z <- matrix(0, 50, 3)
 err_mean1 <- matrix(0, 50, 3)
@@ -20,6 +20,13 @@ norm_C1 <- matrix(1, nrow = 50, ncol = 3)
 norm_C2 <- matrix(1, nrow = 50, ncol = 3)
 norm_C12 <- matrix(1, nrow = 50, ncol = 3)
 
+coverage_m1 <- matrix(0, 50, 3)
+coverage_m2 <- matrix(0, 50, 3)
+coverage_C1 <- matrix(0, 50, 3)
+coverage_C12 <- matrix(0, 50, 3)
+coverage_C2 <- matrix(0, 50, 3)
+interval_width_m1 <- matrix(0, 50, 3)
+interval_width_m2 <- matrix(0, 50, 3)
 for(j in 1:3){
   if(j == 1){
     dir <- "./50_obs/"
@@ -61,25 +68,40 @@ for(j in 1:3){
       err_mean1[i,j] <- norm_1
       err_mean2[i,j] <- norm(est_nu$CI_50[2,] - as.matrix(nu_2_true))
       est_cov <- MVCovCI(dir_i, 20, 100, 1, 1, burnin_prop = 0.5)
+      coverage_C1[i,j] <- sum((est_cov$CI_Lower <= cov1_true) & (cov1_true <= est_cov$CI_Upper))
       err_cov1[i,j] <- norm(est_cov$CI_50 - cov1_true)
       est_cov <- MVCovCI(dir_i, 20, 100, 2, 2, burnin_prop = 0.5)
+      coverage_C2[i,j] <- sum((est_cov$CI_Lower <= cov2_true) & (cov2_true <= est_cov$CI_Upper))
       err_cov2[i,j] <- norm(est_cov$CI_50 - cov2_true)
       est_cov <- MVCovCI(dir_i, 20, 100, 1, 2, burnin_prop = 0.5)
+      coverage_C12[i,j] <- sum((est_cov$CI_Lower <= cov12_true) & (cov12_true <= est_cov$CI_Upper))
       err_cov12[i,j] <- norm(est_cov$CI_50 - cov12_true)
       err_Z[i,j] <- sqrt(norm(Z_est$CI_50 - Z_true, "F") / (2 * nrow(Z_est$CI_50)))
+      interval_width_m1[i,j] <- mean(est_nu$CI_Upper[1,] - est_nu$CI_Lower[1,])
+      interval_width_m2[i,j] <- mean(est_nu$CI_Upper[2,] - est_nu$CI_Lower[2,])
+      coverage_m1[i,j] <- sum((est_nu$CI_Lower[1,] <= nu_1_true) & (nu_1_true <= est_nu$CI_Upper[1,]))
+      coverage_m2[i,j] <- sum((est_nu$CI_Lower[2,] <= nu_2_true) & (nu_2_true <= est_nu$CI_Upper[2,]))
+
     }else{
       err_mean1[i,j] <- norm_2
       err_mean2[i,j] <- norm(est_nu$CI_50[1,] - as.matrix(nu_2_true))
       est_cov <- MVCovCI(dir_i, 20, 100, 2, 2, burnin_prop = 0.5)
+      coverage_C1[i,j] <- sum((est_cov$CI_Lower <= cov1_true) & (cov1_true <= est_cov$CI_Upper))
       err_cov1[i,j] <- norm(est_cov$CI_50 - cov1_true)
       est_cov <- MVCovCI(dir_i, 20, 100, 1, 1, burnin_prop = 0.5)
+      coverage_C2[i,j] <- sum((est_cov$CI_Lower <= cov2_true) & (cov2_true <= est_cov$CI_Upper))
       err_cov2[i,j] <- norm(est_cov$CI_50 - cov2_true)
       est_cov <- MVCovCI(dir_i, 20, 100, 2, 1, burnin_prop = 0.5)
+      coverage_C12[i,j] <- sum((est_cov$CI_Lower <= cov12_true) & (cov12_true <= est_cov$CI_Upper))
       err_cov12[i,j] <- norm(est_cov$CI_50 - cov12_true)
       Z_est_i <- Z_est
       Z_est$CI_50[,1] <- Z_est_i$CI_50[,2]
       Z_est$CI_50[,2] <- Z_est_i$CI_50[,1]
       err_Z[i,j] <- sqrt(norm(Z_est$CI_50 - Z_true, "F") / (2 * nrow(Z_est$CI_50)))
+      interval_width_m1[i,j] <- mean(est_nu$CI_Upper[2,] - est_nu$CI_Lower[2,])
+      interval_width_m2[i,j] <- mean(est_nu$CI_Upper[1,] - est_nu$CI_Lower[1,])
+      coverage_m1[i,j] <- sum((est_nu$CI_Lower[2,] <= nu_1_true) & (nu_1_true <= est_nu$CI_Upper[2,]))
+      coverage_m2[i,j] <- sum((est_nu$CI_Lower[1,] <= nu_2_true) & (nu_2_true <= est_nu$CI_Upper[1,]))
     }
     print(i)
     print(j)

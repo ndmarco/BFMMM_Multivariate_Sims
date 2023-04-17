@@ -1,6 +1,9 @@
 library(ggplot2)
 library(ggtern)
-library(BayesFPMM)
+library(BayesFMMM)
+
+setwd()
+
 ### Load Data
 dat <- readRDS("./BRCA_dat_complete.csv")
 

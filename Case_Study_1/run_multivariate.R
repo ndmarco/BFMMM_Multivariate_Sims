@@ -1,7 +1,12 @@
-library(BayesFPMM)
+library(BayesFMMM)
 library(eegkit)
 
-setwd("/Users/user/Box Sync/BayesFMMM_Supporting_Files/ASD_multivariate")
+########################################
+## Note: Data not publicly available ###
+########################################
+
+setwd()
+
 
 #################################################################
 ## Change relevant directories and make folders before running ##
