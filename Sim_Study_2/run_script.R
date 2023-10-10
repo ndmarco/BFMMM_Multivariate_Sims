@@ -1,7 +1,12 @@
 library(MASS)
 library(DirichletReg)
-library(BayesFMMM)
+library(devtools)
 library(future.apply)
+
+# Install BFMMM package from github
+# If already installed, do not run the following line
+install_github('ndmarco/BayesFMMM')
+library(BayesFMMM)
 
 run_sim <- function(iter){
   set.seed(iter)
@@ -72,15 +77,13 @@ run_sim <- function(iter){
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1)
   dir.create(paste0("2_clusters/trace",iter))
 
   dir_i <- paste(dir, "trace", iter, "/", sep="")
   tot_mcmc_iters <- 100000
   MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
-                                 est1$Z, est1$pi, est1$alpha_3,
-                                 est2$delta, est2$gamma, est2$Phi, est2$A,
-                                 est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
+                                 est1, est2, dir = dir_i,
                                  thinning_num = 10, r_stored_iters = 10000)
 
   ####### 3 Clusters #########
@@ -97,14 +100,12 @@ run_sim <- function(iter){
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1)
   dir_i <- paste(dir, "trace", iter, "/", sep="")
   dir.create(paste0("3_clusters/trace",iter))
   tot_mcmc_iters <- 100000
   MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
-                                 est1$Z, est1$pi, est1$alpha_3,
-                                 est2$delta, est2$gamma, est2$Phi, est2$A,
-                                 est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
+                                 est1, est2, dir = dir_i,
                                  thinning_num = 10, r_stored_iters = 10000)
 
   ####### 4 Clusters #########
@@ -121,14 +122,12 @@ run_sim <- function(iter){
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1)
   dir.create(paste0("4_clusters/trace",iter))
   dir_i <- paste(dir, "trace", iter, "/", sep="")
   tot_mcmc_iters <- 100000
   MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
-                                 est1$Z, est1$pi, est1$alpha_3,
-                                 est2$delta, est2$gamma, est2$Phi, est2$A,
-                                 est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
+                                 est1, est2, dir = dir_i,
                                  thinning_num = 10, r_stored_iters = 10000)
 
   ####### 5 Clusters #########
@@ -145,21 +144,24 @@ run_sim <- function(iter){
   tot_mcmc_iters <- 4000
   n_try <- 5
   ## Get estimates of other parameters
-  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+  est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1)
   dir.create(paste0("5_clusters/trace",iter))
   dir_i <- paste(dir, "trace", iter, "/", sep="")
   tot_mcmc_iters <- 100000
   MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
-                                 est1$Z, est1$pi, est1$alpha_3,
-                                 est2$delta, est2$gamma, est2$Phi, est2$A,
-                                 est1$nu, est1$tau, est2$sigma, est2$chi, dir = dir_i,
+                                 est1, est2, dir = dir_i,
                                  thinning_num = 10, r_stored_iters = 10000)
 }
 
 ##### Run Simulation
 
 ### Set working dir
-setwd("")
+setwd("/Volumes/External_Nick/BMVMMM_Sim2")
+dir.create("2_clusters")
+dir.create("3_clusters")
+dir.create("4_clusters")
+dir.create("5_clusters")
+dir.create("data")
 
 ncpu <- min(5, availableCores())
 #
@@ -168,6 +170,10 @@ plan(multisession, workers = ncpu)
 already_ran <- dir(paste0(getwd(), "/5_clusters"))
 to_run <- which(!paste0("trace", 1:50) %in% already_ran)
 seeds <- to_run
+start_time <- Sys.time()
 future_lapply(seeds, function(this_seed) run_sim(this_seed))
+end_time <- Sys.time()
 
+# get elapsed time of the simulation
+total_time <- end_time - start_time
 

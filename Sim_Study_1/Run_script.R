@@ -1,7 +1,12 @@
-library(BayesFMMM)
+library(devtools)
 library(MASS)
 library(DirichletReg)
 library(future.apply)
+
+# Install BFMMM package from github
+# If already installed, do not run the following line
+install_github('ndmarco/BayesFMMM')
+library(BayesFMMM)
 
 run_sim_mean_adj <- function(iter){
   set.seed(iter)
@@ -15,17 +20,17 @@ run_sim_mean_adj <- function(iter){
     nu <- matrix(nu, nrow = 2, ncol = 10)
     decomp <- svd(nu, nv = 10)
     Phi_i <- matrix(0, nrow = 2, ncol = 10)
-    Phi_i[1,] <- t(rnorm(8, 0, 1)) %*% t(decomp$v[,3:10])
-    Phi_i[2,] <- t(rnorm(8, 0, 1)) %*% t(decomp$v[,3:10])
+    Phi_i[1,] <- rnorm(10, 0, 1)
+    Phi_i[2,] <- rnorm(10, 0, 1)
     Phi_1 <- Phi_i
-    Phi_i[1,] <- t(rnorm(8, 0, 0.7)) %*% t(decomp$v[,3:10])
-    Phi_i[2,] <- t(rnorm(8, 0, 0.7)) %*% t(decomp$v[,3:10])
+    Phi_i[1,] <- rnorm(10, 0, 0.7)
+    Phi_i[2,] <- rnorm(10, 0, 0.7)
     Phi_2 <- Phi_i
-    Phi_i[1,] <- t(rnorm(8, 0, 0.5)) %*% t(decomp$v[,3:10])
-    Phi_i[2,] <- t(rnorm(8, 0, 0.5)) %*% t(decomp$v[,3:10])
+    Phi_i[1,] <- rnorm(10, 0, 0.5)
+    Phi_i[2,] <- rnorm(10, 0, 0.5)
     Phi_3 <- Phi_i
-    Phi_i[1,] <- t(rnorm(8, 0, 0.3)) %*% t(decomp$v[,3:10])
-    Phi_i[2,] <- t(rnorm(8, 0, 0.3)) %*% t(decomp$v[,3:10])
+    Phi_i[1,] <- rnorm(10, 0, 0.3)
+    Phi_i[2,] <- rnorm(10, 0, 0.3)
     Phi_4 <- Phi_i
     Phi <- array(0, dim = c(2, 10, 4))
     Phi[,,1] <- matrix(Phi_1, nrow = 2)
@@ -81,12 +86,10 @@ run_sim_mean_adj <- function(iter){
     n_try <- 10
     ## Run function
     est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen,
-                             est1$Z, est1$nu)
+                             est1)
     dir_i <- paste("./", n_obs_vec[n],"_obs/sim",iter, "/", sep="")
     tot_mcmc_iters <- 200000
-    MCMC.chain <- BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen, est1$Z, est1$pi, est1$alpha_3,
-                                                est2$delta, est2$gamma, est2$Phi, est2$A,
-                                                est1$nu, est1$tau, est2$sigma, est2$chi,
+    MCMC.chain <- BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen, est1, est2,
                                                 dir = dir_i, thinning_num = 100, r_stored_iters = 10000)
   }
 }
@@ -96,7 +99,7 @@ run_sim_mean_adj <- function(iter){
 ##### Run Simulation
 
 ### Set working dir
-setwd("")
+setwd("/Volumes/External_Nick/BMVMMM_Sim1_new/")
 
 ncpu <- min(5, availableCores())
 #

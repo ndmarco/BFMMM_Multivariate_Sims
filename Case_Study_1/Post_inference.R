@@ -3,6 +3,7 @@ library(eegkit)
 library(gridExtra)
 library(grDevices)
 library(ggplot2)
+library(MASS)
 
 setwd("")
 ########################################
@@ -32,7 +33,7 @@ mean_est <- MVMeanCI(dir, 50)
 
 #### Correlation Plots
 library(reshape2)
-cov_est1 <- MVCovCI(dir, 50, 1000, 1, 1)
+cov_est1 <- MVCovCI(dir, 50, 1, 1, burnin_prop = 0.5)
 mat <- cov_est1$CI_50
 rownames(mat) <- colnames(mat) <- seq(6,14, 0.25)
 melted_mat <- melt(mat)
@@ -42,7 +43,7 @@ ggplot(data = melted_mat, aes(x=Var1, y=Var2, fill=value)) +
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
         plot.title = element_text(hjust = 0.5), legend.position = "none") + xlab("Frequency (Hz)") + ylab("Frequency (Hz)")
 
-cov_est2 <- MVCovCI(dir, 50, 1000, 2, 2)
+cov_est2 <- MVCovCI(dir, 50, 2, 2, burnin_prop = 0.5)
 mat <- cov_est2$CI_50
 rownames(mat) <- colnames(mat) <- seq(6,14, 0.25)
 melted_mat <- melt(mat)
@@ -52,7 +53,7 @@ ggplot(data = melted_mat, aes(x=Var1, y=Var2, fill=value)) +
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
         plot.title = element_text(hjust = 0.5), legend.position = "none") + xlab("Frequency (Hz)") + ylab("Frequency (Hz)")
 
-cov_est12 <- MVCovCI(dir, 50, 1000, 1, 2)
+cov_est12 <- MVCovCI(dir, 50, 1, 2, burnin_prop = 0.5)
 mat <- cov_est12$CI_50
 rownames(mat) <- colnames(mat) <- seq(6,14, 0.25)
 melted_mat <- melt(mat)
@@ -64,8 +65,9 @@ ggplot(data = melted_mat, aes(x=Var1, y=Var2, fill=value)) +
 
 
 #### Mean plots
-dir <- ""
-mean_est <- MVMeanCI(dir, 50)
+library(tibble)
+dir <- paste0(getwd(), "/")
+mean_est <- MVMeanCI(dir, 50, burnin_prop = 0.5)
 mean <- c(mean_est$CI_50[1,],mean_est$CI_Upper[1,], mean_est$CI_Lower[1,])
 shape <- as.factor(c(rep(1, 33), rep(2,66)))
 df_1 <- data_frame("power" = mean, "freq" = rep(seq(6,14,0.25), 3), "shape" = shape)
@@ -98,10 +100,10 @@ demDat <- demDat[which(demDat$ID %in% subj_id), ]
 data_Z <- data.frame("Cluster 1" = Z$CI_50[,1], "Clinical Diagnosis" = demDat$Group)
 data_Z$Clinical.Diagnosis[data_Z$Clinical.Diagnosis == 2] <- "ASD"
 data_Z$Clinical.Diagnosis[data_Z$Clinical.Diagnosis == 1] <- "TD"
-p3 <- ggplot(data= data_Z, aes(x = `Cluster.1` , y = Clinical.Diagnosis)) + geom_violin(trim = F, xlim = c(0,1)) + geom_point() + xlab("Feature 1") + ylab("Clinical Diagnosis") +
+p3 <- ggplot(data= data_Z, aes(x = `Cluster.1` , y = Clinical.Diagnosis)) + geom_violin(trim = F) + geom_point() + xlab("Feature 1 Membership") + ylab("Clinical Diagnosis") +
   stat_summary(
     geom = "point",
-    fun.x = "mean",
+    fun = "mean",
     col = "black",
     size = 3,
     shape = 24,
@@ -109,7 +111,84 @@ p3 <- ggplot(data= data_Z, aes(x = `Cluster.1` , y = Clinical.Diagnosis)) + geom
                                         panel.background = element_blank(),axis.line = element_line(colour = "black"),
                                         plot.title = element_text(hjust = 0.5))
 
-grid.arrange(p1, p2, p3,  layout_matrix = rbind(c(1,2),c(1,2), c(1,2), c(3,3),c(3,3)))
+### Plot Trajectory of Means
+means <- matrix(0, nrow = 101, ncol= 33)
+for(i in 0:100){
+  means[i+1,] <- ((i * 0.01) * mean_est$CI_50[1,]) + ((1 - (i * 0.01)) * mean_est$CI_50[2,])
+}
+
+df <- data_frame("power" = as.vector(t(means)), "freq" = rep(seq(6,14,0.25), 101), "Z" = rep(0,3333))
+for(i in 2:101){
+  df$Z[((i-1)*33 + 1):(i*33)] <-((i) * 0.01)
+}
+library(latex2exp)
+
+p <- ggplot(data = df, aes(x = freq, y = power, color = Z, group = Z)) + geom_point() +
+  ggtitle("Mean Structure") + theme_classic() +
+  theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        plot.title = element_text(hjust = 0.5)) + xlab("Frequency (Hz)") + ylab("Relative Power") +
+  scale_colour_gradientn(name = TeX("$Z_{i1}$"), colours = c('blue', 'red'))
+
+
+grid.arrange(p1, p2, p, p3,  layout_matrix = rbind(c(1,2),c(1,2), c(1,2), c(3,4),c(3,4),c(3,4)))
+
+####### Create Plot of Uncertainty
+
+df_1 <- matrix(0, nrow = 10000, ncol = 33)
+
+for(i in 1:10000){
+  df_1[i,] <- mvrnorm(n=1, mean_est$mean_trace[1,,14999 +i], cov_est1$cov_trace[,,1499+i])
+}
+
+get_quantiles <- function(df){
+  df_1_median <- rep(0, 33)
+  df_1_upper <- rep(0, 33)
+  df_1_lower <- rep(0, 33)
+
+  for(i in 1:33){
+    quant <- quantile(df[,i], c(0.25, 0.5 , 0.75))
+    df_1_lower[i] <- quant[1]
+    df_1_median[i] <- quant[2]
+    df_1_upper[i] <- quant[3]
+  }
+  return(list("lower" = df_1_lower, "upper" = df_1_upper, "median" = df_1_median))
+}
+quant_1 <- get_quantiles(df_1)
+
+df_2 <- matrix(0, nrow = 10000, ncol = 33)
+for(i in 1:10000){
+  df_2[i,] <- mvrnorm(n=1, mean_est$mean_trace[2,,14999 +i], cov_est2$cov_trace[,,1499+i])
+}
+quant_2 <- get_quantiles(df_2)
+df_12 <- matrix(0, nrow = 10000, ncol = 33)
+for(i in 1:10000){
+  df_12[i,] <- mvrnorm(n=1, (mean_est$mean_trace[2,,14999 +i] + mean_est$mean_trace[1,,14999 +i])/2, (0.25 *cov_est2$cov_trace[,,1499+i] + 0.25*cov_est1$cov_trace[,,1499+i] +
+                                                                                                        0.25* cov_est12$cov_trace[,,1499+i] + t(0.25* cov_est12$cov_trace[,,1499+i])))
+}
+quant_12 <- get_quantiles(df_12)
+
+
+mean <- c(quant_1$median, quant_2$median, quant_12$median)
+colors <- as.factor(c(rep(1, 33), rep(2,33), rep(3, 33)))
+df <- data_frame("power" = mean, "freq" = rep(seq(6,14,0.25), 3), "colors" = colors)
+df_1 <- df[df$colors ==1,]
+df_2 <- df[df$colors ==2,]
+df_3 <- df[df$colors ==3,]
+
+p1 <- ggplot(data = df, aes(x = freq, y = power, color = colors)) + geom_point() +
+  geom_ribbon(data = df_1, aes(ymin = quant_1$lower, ymax = quant_1$upper, x = seq(6,14,0.25)), fill = "red", alpha = 0.2) +
+  geom_ribbon(data = df_2, aes(ymin = quant_2$lower, ymax = quant_2$upper, x = seq(6,14,0.25)), fill = "blue", alpha = 0.2) +
+  geom_ribbon(data = df_3, aes(ymin = quant_12$lower, ymax = quant_12$upper, x = seq(6,14,0.25)), fill = "purple", alpha = 0.2) +
+  scale_color_manual(values = c("red", "blue", "purple")) + ggtitle("Estimated Distribution by Feature Membership") + theme_classic() +
+  theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        plot.title = element_text(hjust = 0.5), legend.position = "none") + xlab("Frequency (Hz)") + ylab("Relative Power")
+
+
+cols <- scales::seq_gradient_pal("blue", "red", "Lab")(seq(0,1,length.out=101))
+
+
 
 
 ### AIC BIC DIC
@@ -144,11 +223,11 @@ Y <- data
 
 dir <- "./trace/"
 
-AIC_2 <- MV_Model_AIC(dir, 50, 1000, Y)
-BIC_2 <- MV_Model_BIC(dir, 50, 1000, Y)
-DIC_2 <- MV_Model_DIC(dir, 50, 1000, Y)
+AIC_2 <- MVAIC(dir, 50, Y)
+BIC_2 <- MVBIC(dir, 50, Y)
+DIC_2 <- MVDIC(dir, 50, Y)
 
 dir <- "./trace_3/"
-AIC_3 <- MV_Model_AIC(dir, 50, 1000, Y)
-BIC_3 <- MV_Model_BIC(dir, 50, 1000, Y)
-DIC_3 <- MV_Model_DIC(dir, 50, 1000, Y)
+AIC_3 <- MVAIC(dir, 50, Y)
+BIC_3 <- MVBIC(dir, 50, Y)
+DIC_3 <- MVDIC(dir, 50, Y)

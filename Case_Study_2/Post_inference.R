@@ -54,7 +54,7 @@ ggplot(data = df, mapping = aes(x = gene, y = y, fill = Expression)) +
         axis.ticks.x=element_blank())
 
 #### Correlation Plots
-cov_est1 <- MVCovCI(dir, 50, 1000, 1, 1, rescale = F)
+cov_est1 <- MVCovCI(dir, 50, 1, 1, rescale = F)
 corr1 <- cov_est1$CI_50
 for(i in 1:nrow(corr1)){
   for(j in 1:ncol(corr1)){
@@ -111,7 +111,7 @@ cols = colorRamp2(c(-1,0,1),c("blue","white","red"),transparency = 0)
 chordDiagram(df,col=cols, annotationTrack = c("name","grid"), transparency = 0.2)
 
 
-cov_est1 <- MVCovCI(dir, 50, 1000, 3, 3, rescale = F)
+cov_est1 <- MVCovCI(dir, 50, 3, 3, rescale = F)
 corr1 <- cov_est1$CI_50
 for(i in 1:nrow(corr1)){
   for(j in 1:ncol(corr1)){

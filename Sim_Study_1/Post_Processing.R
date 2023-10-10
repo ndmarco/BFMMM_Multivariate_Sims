@@ -5,7 +5,7 @@ library(latex2exp)
 library(pracma)
 
 ### Set working dir
-setwd("")
+setwd("/Volumes/External_Nick/BMVMMM_Sim1_new/")
 
 err_Z <- matrix(0, 50, 3)
 err_mean1 <- matrix(0, 50, 3)
@@ -67,13 +67,13 @@ for(j in 1:3){
     if(norm_1 < norm_2){
       err_mean1[i,j] <- norm_1
       err_mean2[i,j] <- norm(est_nu$CI_50[2,] - as.matrix(nu_2_true))
-      est_cov <- MVCovCI(dir_i, 20, 100, 1, 1, burnin_prop = 0.5)
+      est_cov <- MVCovCI(dir_i, 20, 1, 1, burnin_prop = 0.5)
       coverage_C1[i,j] <- sum((est_cov$CI_Lower <= cov1_true) & (cov1_true <= est_cov$CI_Upper))
       err_cov1[i,j] <- norm(est_cov$CI_50 - cov1_true)
-      est_cov <- MVCovCI(dir_i, 20, 100, 2, 2, burnin_prop = 0.5)
+      est_cov <- MVCovCI(dir_i, 20, 2, 2, burnin_prop = 0.5)
       coverage_C2[i,j] <- sum((est_cov$CI_Lower <= cov2_true) & (cov2_true <= est_cov$CI_Upper))
       err_cov2[i,j] <- norm(est_cov$CI_50 - cov2_true)
-      est_cov <- MVCovCI(dir_i, 20, 100, 1, 2, burnin_prop = 0.5)
+      est_cov <- MVCovCI(dir_i, 20, 1, 2, burnin_prop = 0.5)
       coverage_C12[i,j] <- sum((est_cov$CI_Lower <= cov12_true) & (cov12_true <= est_cov$CI_Upper))
       err_cov12[i,j] <- norm(est_cov$CI_50 - cov12_true)
       err_Z[i,j] <- sqrt(norm(Z_est$CI_50 - Z_true, "F") / (2 * nrow(Z_est$CI_50)))
@@ -85,13 +85,13 @@ for(j in 1:3){
     }else{
       err_mean1[i,j] <- norm_2
       err_mean2[i,j] <- norm(est_nu$CI_50[1,] - as.matrix(nu_2_true))
-      est_cov <- MVCovCI(dir_i, 20, 100, 2, 2, burnin_prop = 0.5)
+      est_cov <- MVCovCI(dir_i, 20, 2, 2, burnin_prop = 0.5)
       coverage_C1[i,j] <- sum((est_cov$CI_Lower <= cov1_true) & (cov1_true <= est_cov$CI_Upper))
       err_cov1[i,j] <- norm(est_cov$CI_50 - cov1_true)
-      est_cov <- MVCovCI(dir_i, 20, 100, 1, 1, burnin_prop = 0.5)
+      est_cov <- MVCovCI(dir_i, 20, 1, 1, burnin_prop = 0.5)
       coverage_C2[i,j] <- sum((est_cov$CI_Lower <= cov2_true) & (cov2_true <= est_cov$CI_Upper))
       err_cov2[i,j] <- norm(est_cov$CI_50 - cov2_true)
-      est_cov <- MVCovCI(dir_i, 20, 100, 2, 1, burnin_prop = 0.5)
+      est_cov <- MVCovCI(dir_i, 20, 2, 1, burnin_prop = 0.5)
       coverage_C12[i,j] <- sum((est_cov$CI_Lower <= cov12_true) & (cov12_true <= est_cov$CI_Upper))
       err_cov12[i,j] <- norm(est_cov$CI_50 - cov12_true)
       Z_est_i <- Z_est
@@ -120,9 +120,9 @@ C1_RMSE[101:150,2] <- 1000
 C1_RMSE <- as.data.frame(C1_RMSE)
 colnames(C1_RMSE) <- c("RSE", "N")
 C1_RMSE$N <- as.factor(C1_RMSE$N)
-p1 <- ggplot(C1_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, lim = c(0,0.6)) + ggtitle(TeX("$C^{(1,1)}$")) +
-  geom_boxplot() +  theme_classic() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+p1 <- ggplot(C1_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, trans = 'log2', minor_breaks = scales::pretty_breaks(n = 20), breaks = c(2, 0.5, 0.1, 0.05)) + ggtitle(TeX("$C^{(1,1)}$")) +
+  geom_boxplot() +  theme_bw() + theme(panel.border = element_blank(),
+                                             axis.line = element_line(colour = "black"),
                                             legend.position = "none",plot.title = element_text(hjust = 0.5))
 C2_RMSE <- matrix(0, 150, 2)
 C2_RMSE[1:50,1] <- (err_cov2[,1] / norm_C2[,1])
@@ -134,9 +134,9 @@ C2_RMSE[101:150,2] <- 1000
 C2_RMSE <- as.data.frame(C2_RMSE)
 colnames(C2_RMSE) <- c("RSE", "N")
 C2_RMSE$N <- as.factor(C2_RMSE$N)
-p2 <- ggplot(C2_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, lim = c(0,0.7)) + ggtitle(TeX("$C^{(2,2)}$")) +
-  geom_boxplot() +  theme_classic() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+p2 <- ggplot(C2_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, trans = 'log2', minor_breaks = scales::pretty_breaks(n = 20), breaks = c(2, 0.5, 0.1, 0.05)) + ggtitle(TeX("$C^{(2,2)}$")) +
+  geom_boxplot() +  theme_bw() + theme(panel.border = element_blank(),
+                                            axis.line = element_line(colour = "black"),
                                             legend.position = "none",plot.title = element_text(hjust = 0.5))
 C12_RMSE <- matrix(0, 150, 2)
 C12_RMSE[1:50,1] <- (err_cov12[,1] / norm_C12[,1])
@@ -148,9 +148,9 @@ C12_RMSE[101:150,2] <- 1000
 C12_RMSE <- as.data.frame(C12_RMSE)
 colnames(C12_RMSE) <- c("RSE", "N")
 C12_RMSE$N <- as.factor(C12_RMSE$N)
-p3 <- ggplot(C12_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, lim = c(0,0.7)) + ggtitle(TeX("$C^{(1,2)}$")) +
-  geom_boxplot() +  theme_classic() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+p3 <- ggplot(C12_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, trans = 'log2', minor_breaks = scales::pretty_breaks(n = 20), breaks = c(2, 0.5, 0.1, 0.02)) + ggtitle(TeX("$C^{(1,2)}$")) +
+  geom_boxplot() +  theme_bw() + theme(panel.border = element_blank(),
+                                            axis.line = element_line(colour = "black"),
                                             legend.position = "none",plot.title = element_text(hjust = 0.5))
 mu1_RMSE <- matrix(0, 150, 2)
 mu1_RMSE[1:50,1] <- (err_mean1[,1] / norm_mu1[,1])
@@ -162,9 +162,9 @@ mu1_RMSE[101:150,2] <- 1000
 mu1_RMSE <- as.data.frame(mu1_RMSE)
 colnames(mu1_RMSE) <- c("RSE", "N")
 mu1_RMSE$N <- as.factor(mu1_RMSE$N)
-p4 <- ggplot(mu1_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, lim= c(0,.15))  + ggtitle(TeX("$\\mu_1$")) +
-  geom_boxplot() +  theme_classic() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+p4 <- ggplot(mu1_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, trans = 'log2', minor_breaks = scales::pretty_breaks(n = 10), breaks = c(0.2, 0.1, 0.05, 0.02))  + ggtitle(TeX("$\\mu_1$")) +
+  geom_boxplot() +  theme_bw() + theme(panel.border = element_blank(),
+                                            axis.line = element_line(colour = "black"),
                                             legend.position = "none",plot.title = element_text(hjust = 0.5))
 mu2_RMSE <- matrix(0, 150, 2)
 mu2_RMSE[1:50,1] <- (err_mean2[,1] / norm_mu2[,1])
@@ -176,9 +176,9 @@ mu2_RMSE[101:150,2] <- 1000
 mu2_RMSE <- as.data.frame(mu2_RMSE)
 colnames(mu2_RMSE) <- c("RSE", "N")
 mu2_RMSE$N <- as.factor(mu2_RMSE$N)
-p5 <- ggplot(mu2_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, lim=c(0,0.20)) + ggtitle(TeX("$\\mu_2$"))+
-  geom_boxplot() +  theme_classic() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+p5 <- ggplot(mu2_RMSE, aes(x=N, y=`RSE`)) + scale_y_continuous(labels = scales::percent, trans = 'log2', minor_breaks = scales::pretty_breaks(n = 10), breaks = c(0.2, 0.1, 0.05, 0.02)) + ggtitle(TeX("$\\mu_2$"))+
+  geom_boxplot() +  theme_bw() + theme(panel.border = element_blank(),
+                                            axis.line = element_line(colour = "black"),
                                             legend.position = "none",plot.title = element_text(hjust = 0.5))
 
 
@@ -192,9 +192,9 @@ Z_RMSE[101:150,2] <- 1000
 Z_RMSE <- as.data.frame(Z_RMSE)
 colnames(Z_RMSE) <- c("RMSE", "N")
 Z_RMSE$N <- as.factor(Z_RMSE$N)
-p6 <- ggplot(Z_RMSE, aes(x=N, y=`RMSE`)) + ggtitle("Z") + ylim(c(0,0.08)) +
-  geom_boxplot() +  theme_classic() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+p6 <- ggplot(Z_RMSE, aes(x=N, y=`RMSE`)) + ggtitle("Z") + scale_y_continuous( trans = 'log2', minor_breaks = scales::pretty_breaks(n = 10), breaks = c(0.16, 0.08, 0.04, 0.02, 0.01))+
+  geom_boxplot() +  theme_bw() + theme(panel.border = element_blank(),
+                                            axis.line = element_line(colour = "black"),
                                             legend.position = "none",plot.title = element_text(hjust = 0.5))
 grid.arrange(p1, p2, p3, p4, p5, p6, layout_matrix = rbind(c(1, 1, 2, 2, 3, 3),
                                                            c(4, 4, 5, 5, 6, 6)))

@@ -5,7 +5,7 @@ library(eegkit)
 ## Note: Data not publicly available ###
 ########################################
 
-setwd()
+setwd("/Users/nicholasmarco/Documents")
 
 
 #################################################################
@@ -47,18 +47,16 @@ k <- 2
 n_eigen <- 5
 
 ## Run function
-est1 <- BMVPMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
+est1 <- BMVMMM_Nu_Z_multiple_try(tot_mcmc_iters, n_try, k, Y, n_eigen)
 
 ## Run function
-est2 <- BMVPMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1$Z, est1$nu)
+est2 <- BMVMMM_Theta_est(tot_mcmc_iters, n_try, k, Y, n_eigen, est1)
 
 tot_mcmc_iters <- 500000
 
-dir = "/Users/user/Box Sync/BayesFPMM_Supporting_Files/ASD_multivariate/Multivariate/trace/"
+dir = "/Volumes/External_Nick/ASD_Multivariate/"
 
-MCMC.chain <-BMVPMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
-                               est1$Z, est1$pi, est1$alpha_3,
-                               est2$delta, est2$gamma, est2$Phi, est2$A,
-                               est1$nu, est1$tau, est2$sigma, est2$chi, thinning_num = 10, r_stored_iters = 10000,
+MCMC.chain <-BMVMMM_warm_start(tot_mcmc_iters, k, Y, n_eigen,
+                               est1, est2, thinning_num = 10, r_stored_iters = 10000,
                                dir = dir)
 
